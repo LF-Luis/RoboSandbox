@@ -1,0 +1,37 @@
+services:
+
+  genesis:
+    container_name: genesis_66708b
+    image: genesis:66708b
+    build:
+      context: ./temp_data/Genesis
+      dockerfile: docker/Dockerfile
+    network_mode: host
+    gpus: all
+    environment:
+      - DISPLAY=${DISPLAY}
+    volumes:
+      - /dev/dri:/dev/dri
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw
+      - ${PWD}:/workspace/RoboSandbox
+    entrypoint: []
+    command: ["bash","-lc","bash /workspace/RoboSandbox/scripts/genesis_startup.sh || echo '[genesis] script failed'; exec tail -f /dev/null"]
+
+  openpi:
+    container_name: openpi_b84cc7_jointpos
+    image: openpi:b84cc7_jointpos
+    build:
+      context: https://github.com/Physical-Intelligence/openpi.git#b84cc75031eb3a9cbcfb1d55ee85fbd7db81e8bb
+      dockerfile: scripts/docker/serve_policy.Dockerfile
+    init: true
+    tty: true
+    network_mode: host
+    gpus: all
+    environment:
+      # NOTE: Launching with the pi0_fast_droid_jointpos model: https://github.com/Physical-Intelligence/openpi/tree/karl/droid_policies
+      - SERVER_ARGS=policy:checkpoint --policy.config=pi0_fast_droid_jointpos --policy.dir=s3://openpi-assets-simeval/pi0_fast_droid_jointpos
+      - OPENPI_DATA_HOME=/openpi_assets
+      - IS_DOCKER=true
+    volumes:
+      - ./temp_data/openpi:/app
+      - ${OPENPI_DATA_HOME:-~/.cache/openpi}:/openpi_assets
