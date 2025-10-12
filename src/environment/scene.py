@@ -20,17 +20,17 @@ def get_replicacad_scene_config(scene_name: str) -> Path:
 
 def determine_urdf_path(name: str) -> Path:
     """Determine URDF file path for articulated object by its template name."""
-    dir = name
     urdf_base = REPLICACAD_DIR / "urdf"
-    if name.startswith("chestOfDrawers_01"):
-        dir = "chest_of_drawers"
-    elif name.startswith("kitchenCupboard_01"):
-        dir = "kitchen_cupboards"
-    elif name.startswith("door"):
-        dir = "doors"
-    return urdf_base / dir / f"{name}.urdf"
+    return urdf_base / name / f"{name}.urdf"
 
-def add_replicad_scene(scene: gs.Scene, scene_config_file: str, keep_as_rigid: set[str], skip_loadding: set[str]):
+def add_replicad_scene(
+    scene: gs.Scene,
+    scene_config_file: str,
+    keep_as_rigid: set[str],
+    skip_loading: set[str],
+    load_articulated: bool = False,
+    keep_articulated: set[str] = {},
+):
     """
     keep_as_rigid: object names from ReplicaCAD scene to keep as rigid objects. Everything has no collision physics, is just for visual input
     """
@@ -71,7 +71,7 @@ def add_replicad_scene(scene: gs.Scene, scene_config_file: str, keep_as_rigid: s
         # e.g. "objects/frl_apartment_table" -> "frl_apartment_table"
         obj_name = Path(obj["template_name"]).name
         print(f"Processing object {i+1}/{objs_len}, {obj_name}")
-        if obj_name in skip_loadding:
+        if obj_name in skip_loading:
             print(f"Skip loading object: {obj_name}.")
             continue
 
@@ -114,23 +114,53 @@ def add_replicad_scene(scene: gs.Scene, scene_config_file: str, keep_as_rigid: s
                 surface=gs.surfaces.Default(vis_mode="visual"),
             )
 
-    return
+    if not load_articulated:
+        return
 
     #########################################################
     # Load articulated objects (doors, cabinets with URDFs) #
     #########################################################
 
     for art in scene_data.get("articulated_object_instances", []):
-        name = art["template_name"]  # e.g. "fridge", "door1", "kitchenCabinet_01", ...
+        name = art["template_name"]  # e.g. "fridge", "door2", "kitchenCupboard_01", ...
         urdf_path = determine_urdf_path(name)
-        if not os.path.exists(urdf_path):
-            print(f"(Skipping {name}, URDF not found: {urdf_path})")
-            continue
-        pos_hab = art.get("translation", [0,0,0])
-        rot_hab = art.get("rotation", [1,0,0,0])
+        pos_hab = art.get("translation")
+        rot_hab = art.get("rotation")
         pos_gen, quat_gen = habitat_to_genesis_transform(pos_hab, rot_hab)
-        scene.add_entity(
-            gs.morphs.URDF(file=urdf_path, pos=pos_gen, quat=quat_gen, fixed=art.get("fixed_base", True)),
-            material=gs.materials.Rigid(friction=0.5, coup_restitution=0.0),
-            surface=gs.surfaces.Default(vis_mode="visual")
-        )
+        scale = 1
+
+        # Need to hardcode scale for some URDFs that ReplicaCAD didn't give the scale to:
+        if name == "kitchenCupboard_01":
+            scale = 0.4
+
+        if name in keep_articulated:
+            scene.add_entity(
+                gs.morphs.URDF(
+                    file=str(urdf_path),
+                    pos=pos_gen,
+                    quat=quat_gen,
+                    scale=scale,
+                    # fixed=art.get("fixed_base"),
+                    visualization=True,
+                    collision=True,
+                    fixed=True,
+                    convexify=False,
+                    # decimate=True,  # Need newer version of Genesis
+                    # decompose_nonconvex=False,
+                ),
+                material=gs.materials.Rigid(friction=0.5, coup_restitution=0.0),
+                surface=gs.surfaces.Default(vis_mode="visual")
+            )
+        else:
+            scene.add_entity(
+                gs.morphs.URDF(
+                    file=str(urdf_path),
+                    pos=pos_gen,
+                    quat=quat_gen,
+                    scale=scale,
+                    fixed=art.get("fixed_base"),
+                    collision=False,
+                ),
+                material=gs.materials.Rigid(friction=0.5, coup_restitution=0.0),
+                surface=gs.surfaces.Default(vis_mode="visual")
+            )

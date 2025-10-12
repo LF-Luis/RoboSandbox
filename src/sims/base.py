@@ -8,6 +8,10 @@ from src.environment.scene import add_replicad_scene
 
 @dataclass
 class BaseSimSettings(ABC):
+    keep_as_rigid = {}
+    skip_loading = {}
+    keep_articulated = {}
+    load_articulated = False,
 
     @abstractmethod
     def setup_scene(self, scene: gs.Scene):
@@ -38,7 +42,9 @@ class ReplicadBase(BaseSimSettings):
             scene=scene,
             scene_config_file=self.scene_config_file,
             keep_as_rigid=self.keep_as_rigid,
-            skip_loadding=self.skip_loadding,
+            skip_loading=self.skip_loading,
+            load_articulated=self.load_articulated,
+            keep_articulated=self.keep_articulated,
         )
 
         self._add_objects(scene)

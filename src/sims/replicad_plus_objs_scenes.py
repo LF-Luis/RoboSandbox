@@ -13,6 +13,7 @@ from src.utils.root import get_assets_abs_path, get_temp_data_abs_path
 def get_sim_settings(sim_name: str) -> BaseSimSettings:
     available_scenes = {
         "replicad_apt0_plus_objs": ReplicadApt0PlusObjs,
+        "replicad_apt5_kitchen": ReplicadApt5Kitchen,
         "replicad_apt0_partnet_desk_objs": ReplicadApt0PartNetDeskObjs,
     }
     if sim_name not in available_scenes:
@@ -29,20 +30,12 @@ class ReplicadApt0PlusObjs(ReplicadBase):
     """
     dt = 0.01  # time per sim-step
     steps_per_action = 7  # Number of sim-steps to take per control-action cmd
-    # """
-    # # Sim info
-    # Freq = 15Hz = 1/15 secs/action
-    # DT = 0.002 secs/step
-    # STEPS_PER_ACTION = Freq / DT = 33.333 steps/actions = 33 steps/actions
-    # """
-    # dt=0.002  # time per sim-step
-    # steps_per_action = 33  # Number of sim-steps to take per control-action cmd
     render_all_steps = False  # Whether to render cameras at all sim steps
 
     # Scene info
     scene_config_file = get_replicacad_scene_config("apt_0")
     keep_as_rigid = {"frl_apartment_table_02"}
-    skip_loadding = {"frl_apartment_lamp_02"}  # We're using the table that has lamps, so get the lamps out of the way
+    skip_loading = {"frl_apartment_lamp_02"}  # We're using the table that has lamps, so get the lamps out of the way
     franka_pos = [0.7, -2.9, 0.9]
     franka_quat = [np.cos(np.pi/8), 0., 0., np.sin(np.pi/8)]
 
@@ -69,7 +62,9 @@ class ReplicadApt0PlusObjs(ReplicadBase):
 
 
 class ReplicadApt0PartNetDeskObjs(ReplicadApt0PlusObjs):
-    # Sim objects
+    scene_config_file = get_replicacad_scene_config("apt_5")
+    keep_as_rigid = {}
+    skip_loading = {}
     _mouse = None
     _stapler = None
     def _add_objects(self, scene: gs.Scene):
@@ -98,3 +93,14 @@ class ReplicadApt0PartNetDeskObjs(ReplicadApt0PlusObjs):
         self._stapler.set_pos([0.8, -2.2, 0.97])
         self._stapler.set_quat([1/sqrt(2), 0, 0, -1/sqrt(2)])
 
+
+class ReplicadApt5Kitchen(ReplicadBase):
+    dt = 0.01
+    steps_per_action = 7
+    render_all_steps = False
+    franka_pos = [-1.3, -2.5, 0.9]
+    franka_quat = [0, 0, 0, -1]
+    keep_articulated = {"fridge"}
+    scene_config_file = get_replicacad_scene_config("apt_5")
+    def _add_objects(self, scene: gs.Scene): pass
+    def scene_reset(self): pass
