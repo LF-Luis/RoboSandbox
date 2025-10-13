@@ -36,13 +36,15 @@ export PYTHONPATH="/workspace/RoboSandbox:$PYTHONPATH"
 # Run Pi0 inside a ReplicaCAD scene with a local and ReplicaCAD object
 python run_pi0_rollout.py --sim_run replicad_apt0_plus_objs --prompt "Place the plastic bottle into the bowl."
     python sim_runs/run_pi0_rollout_debug.py --sim_run replicad_apt0_plus_objs --prompt "Place the plastic bottle into the bowl."
-
     python sim_runs/record_multiple_example.py --sim_run replicad_apt0_plus_objs --prompt "Place the plastic bottle into the bowl."
+
+
+python run_pi0_rollout.py --sim_run replicad_apt5_kitchen --prompt "Open the fridge door on the left."
+    python sim_runs/record_multiple_example.py --sim_run replicad_apt5_kitchen --prompt "Open the fridge door on the left."
 
 
 python run_pi0_rollout.py --sim_run replicad_apt0_partnet_desk_objs --prompt "move objects to the right side of the table"
     python sim_runs/run_pi0_rollout_debug.py --sim_run replicad_apt0_partnet_desk_objs --prompt "Pick up the stapler."
-
 
 
 
@@ -55,6 +57,7 @@ python sim_runs/run_pi0_rollout_debug.py --sim_run replicad_apt0_plus_objs --pro
 
 - [ReplicaCAD dataset (HF/haosulab/ReplicaCAD corrected version)](https://huggingface.co/datasets/haosulab/ReplicaCAD)
     - [schema info](https://aihabitat.org/docs/habitat-sim/attributesJSON.html)
+- [DROID Dataset info](https://droid-dataset.github.io/droid/the-droid-dataset)
 - more to add...
 
 </details>

@@ -30,9 +30,10 @@ if __name__ == "__main__":
     # Run sim loop
     loop = 0
     while True:
-        if user_input_should_reset(loop=loop, restart_loop_mod=10):
+        if user_input_should_reset(loop=loop, restart_loop_mod=40):
             task_prompt = user_input_update_prompt(task_prompt)
             print(f"task_prompt: {task_prompt}")
+            scene.reset()
             ss.scene_reset()
             franka_droid.goto_start_pos()
 

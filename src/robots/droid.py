@@ -5,7 +5,7 @@ from datetime import datetime
 from src.robots.droid_const import (
     JOINT_DAMPING,  POSITIONAL_GAINS,  VELOCITY_GAINS,  FORCE_RANGES_LOWER, FORCE_RANGES_UPPER,
     CAM_RES, CAM_FOV, MUJOCO_FILE, EXT_CAM_1_LEFT_OFFSET_T, WRIST_CAM_OFFSET_T, REST_POSE,
-    SETUP_STABILITY_STEPS, JOINT_NAMES, END_EFFECTOR_NAME,
+    SETUP_STABILITY_STEPS, JOINT_NAMES, END_EFFECTOR_NAME, EXT_CAM_2_LEFT_OFFSET_T
 )
 
 
@@ -26,9 +26,17 @@ class DroidManager:
     One-off class to manage the DROID setup in sim.
     """
 
-    def __init__(self, scene: gs.Scene, base_pos: list, base_quat: list, render_all_steps: bool):
+    def __init__(
+        self,
+        scene: gs.Scene,
+        base_pos: list,
+        base_quat: list,
+        render_all_steps: bool,
+        enable_left_2_cam: bool = False,
+    ):
         self._scene = scene
         self._render_all_steps = render_all_steps
+        self._enable_left_2_cam = enable_left_2_cam
         self._franka = self._scene.add_entity(
             gs.morphs.MJCF(file=str(MUJOCO_FILE), pos=base_pos, quat=base_quat),
             material=gs.materials.Rigid(
@@ -46,6 +54,8 @@ class DroidManager:
             return self._scene.add_camera(pos=[0, 0, 0], lookat=[0, 0, 0], res=CAM_RES, fov=CAM_FOV, GUI=True)
         self._wrist_camera = _pinhole_cam()
         self._ext_cam_1_left = _pinhole_cam()
+        if self._enable_left_2_cam:
+            self._ext_cam_2_left = _pinhole_cam()
 
     def _set_control_params(self):
         self._franka.set_dofs_kv(VELOCITY_GAINS, self._dofs_idx)
@@ -73,6 +83,9 @@ class DroidManager:
         # Place cameras in scene
         self._wrist_camera.attach(rigid_link=self._end_effector, offset_T=WRIST_CAM_OFFSET_T)
         self._ext_cam_1_left.attach(rigid_link=self._franka.base_link, offset_T=EXT_CAM_1_LEFT_OFFSET_T)
+        if self._enable_left_2_cam:
+            self._ext_cam_2_left.attach(rigid_link=self._franka.base_link, offset_T=EXT_CAM_2_LEFT_OFFSET_T)
+
         # Setup manipulator+EEF control params
         self._set_control_params()
         # Solve for starting position
@@ -110,6 +123,7 @@ class DroidManager:
                 self._wrist_camera.move_to_attach()
                 _ = self._wrist_camera.render()
                 _ = self._ext_cam_1_left.render()
+                if self._enable_left_2_cam: self._ext_cam_2_left.render()
 
     def apply_abs_joint_actions(self, actions: np.ndarray, steps_per_action: int):
         # Absolute joint pos approach
@@ -129,6 +143,7 @@ class DroidManager:
     def cams_start_recording(self):
         self._wrist_camera.start_recording()
         self._ext_cam_1_left.start_recording()
+        if self._enable_left_2_cam: self._ext_cam_2_left.start_recording()
 
     def cams_end_recording(self, path: str):
         time_stamp = datetime.now().strftime("%m-%d-%y_%H-%M")
@@ -138,3 +153,7 @@ class DroidManager:
         self._ext_cam_1_left.stop_recording(
             save_to_filename=f"{path}/scene_{time_stamp}.mp4"
         )
+        if self._enable_left_2_cam:
+            self._ext_cam_2_left.stop_recording(
+                save_to_filename=f"{path}/scene_2_{time_stamp}.mp4"
+            )

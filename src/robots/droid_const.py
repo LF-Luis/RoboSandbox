@@ -41,6 +41,10 @@ EXT_CAM_1_LEFT_OFFSET_T = gu.trans_quat_to_T(
     trans=np.array([0.05, 0.57, 0.66]),
     quat=np.array([-0.393, -0.195, 0.399, 0.805])  # (w,x,y,z)
 )
+EXT_CAM_2_LEFT_OFFSET_T = gu.trans_quat_to_T(  # Mirror opposite of EXT_CAM_1_LEFT_OFFSET_T
+    trans=np.array([0.05, -0.57, 0.66]),
+    quat=np.array([0.805, 0.399, -0.195, -0.393])
+)
 
 # Manually tuned values for pos_offset and rot_offset of wrist camera w.r.t. EEF
 WRIST_CAM_OFFSET_T = gu.trans_quat_to_T(

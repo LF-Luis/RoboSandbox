@@ -23,7 +23,6 @@ if __name__ == "__main__":
         show_viewer=True,  # Show viewer to help debug
         show_FPS=False,
         sim_options=gs.options.SimOptions(dt=ss.dt, requires_grad=False),
-        renderer=gs.renderers.Rasterizer(),
     )
     ss.setup_scene(scene)
     ss.render_all_steps = True  # Render cams every step to help debug
@@ -50,6 +49,7 @@ if __name__ == "__main__":
     while True:
         if user_input_should_reset(loop=loop, restart_loop_mod=10):
             task_prompt = user_input_update_prompt(task_prompt)
+            scene.reset()
             ss.scene_reset()
             franka_droid.goto_start_pos()
             # Check between runs

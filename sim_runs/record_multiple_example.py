@@ -6,6 +6,19 @@ from src.sims.replicad_plus_objs_scenes import get_sim_settings
 from src.utils.run_sim_helper import user_input_should_reset, user_input_update_prompt, sim_arg_parser, auto_reset
 
 
+"""
+To use renderer=gs.renderers.RayTracer() with the current setup you must fix the
+following bug:
+/opt/conda/lib/python3.11/site-packages/genesis/vis/raytracer.py
+Line 174
+        LuisaRenderPy.init(
+            ...
+            device_index=self.cuda_device,  <--- bug, this is the fix
+            ...
+        )
+"""
+
+
 if __name__ == "__main__":
     args = sim_arg_parser()
     task_prompt, sim_setting = args["task_prompt"], args["sim_run"]
@@ -23,7 +36,7 @@ if __name__ == "__main__":
     )
     ss.setup_scene(scene)
     ss.render_all_steps = True  # Render cams every step so that all frames are recorded
-    franka_droid = DroidManager(scene, ss.franka_pos, ss.franka_quat, ss.render_all_steps)
+    franka_droid = DroidManager(scene, ss.franka_pos, ss.franka_quat, ss.render_all_steps, enable_left_2_cam=True)
     # Build sim and reset franka arm
     scene.build()
     franka_droid.setup()
