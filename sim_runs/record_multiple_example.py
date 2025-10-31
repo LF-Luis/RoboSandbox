@@ -18,7 +18,6 @@ Line 174
         )
 """
 
-
 if __name__ == "__main__":
     args = sim_arg_parser()
     task_prompt, sim_setting = args["task_prompt"], args["sim_run"]
@@ -36,7 +35,7 @@ if __name__ == "__main__":
     )
     ss.setup_scene(scene)
     ss.render_all_steps = True  # Render cams every step so that all frames are recorded
-    franka_droid = DroidManager(scene, ss.franka_pos, ss.franka_quat, ss.render_all_steps, enable_left_2_cam=True)
+    franka_droid = DroidManager(scene, ss.franka_pos, ss.franka_quat, ss.render_all_steps, enable_left_2_cam=True, rest_pose=ss.rest_pose)
     # Build sim and reset franka arm
     scene.build()
     franka_droid.setup()

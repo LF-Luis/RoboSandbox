@@ -4,6 +4,7 @@ from math import sqrt
 import numpy as np
 import genesis as gs
 
+from src.robots.droid_const import REST_POSE
 from src.sims.base import BaseSimSettings, ReplicadBase
 from src.environment.rigid_objs import add_replicacad_obj
 from src.environment.scene import get_replicacad_scene_config
@@ -14,7 +15,7 @@ def get_sim_settings(sim_name: str) -> BaseSimSettings:
     available_scenes = {
         "replicad_apt0_plus_objs": ReplicadApt0PlusObjs,
         "replicad_apt5_kitchen": ReplicadApt5Kitchen,
-        "replicad_apt0_partnet_desk_objs": ReplicadApt0PartNetDeskObjs,
+        "replicad_apt4_google_scan_objs": ReplicadApt4_GoogleScanObjs,
     }
     if sim_name not in available_scenes:
         raise ValueError(f"Unknown scene setup: {sim_name}. Available scenes: {list(available_scenes.keys())}")
@@ -38,6 +39,8 @@ class ReplicadApt0PlusObjs(ReplicadBase):
     skip_loading = {"frl_apartment_lamp_02"}  # We're using the table that has lamps, so get the lamps out of the way
     franka_pos = [0.7, -2.9, 0.9]
     franka_quat = [np.cos(np.pi/8), 0., 0., np.sin(np.pi/8)]
+    rest_pose = REST_POSE
+    load_articulated = False
 
     # Sim objects
     _bottle = None
@@ -61,37 +64,65 @@ class ReplicadApt0PlusObjs(ReplicadBase):
         self._replica_bowl.set_quat([0.7071, 0.7071, 0, 0])
 
 
-class ReplicadApt0PartNetDeskObjs(ReplicadApt0PlusObjs):
-    scene_config_file = get_replicacad_scene_config("apt_5")
+class ReplicadApt4_GoogleScanObjs(ReplicadBase):
+    dt = 0.01
+    steps_per_action = 7
+    render_all_steps = False
+    load_articulated = False
+    scene_config_file = get_replicacad_scene_config("apt_4")
+    franka_pos = [2.75, -5.1, 0.4]
+    franka_quat = [0, 0, 0, 1]
+    rest_pose = [0, -0.4, 0, -1.8, 0, 1.4, 0, 0., 0.]
+    # keep_as_rigid = {"frl_apartment_table_03"}
     keep_as_rigid = {}
     skip_loading = {}
-    _mouse = None
-    _stapler = None
+    _table_plane = None
+    _g_chicken_racer_toy = None  # Google Scan Dataset object
+    _g_basket = None             # Google Scan Dataset object
+    _g_helicopter = None         # Google Scan Dataset object
+    _g_fire_truck = None         # Google Scan Dataset object
+
+    def _add_mjcf_obj(self, file, scene, pos, quat=[1, 0, 0, 0]):
+        return scene.add_entity(
+            gs.morphs.MJCF(
+                file=file, pos=pos, quat=quat, visualization=True,
+                collision=True, convexify=False,
+            ),
+            material=gs.materials.Rigid(),
+            surface=gs.surfaces.Default(vis_mode="visual"),
+        )
+
     def _add_objects(self, scene: gs.Scene):
-        self._mouse = scene.add_entity(
-            material=gs.materials.Rigid(rho=300),
-            morph=gs.morphs.URDF(
-                file=str(get_temp_data_abs_path("PartNet-Mobility/103025/mobility.urdf")),
-                scale=0.065,
-                pos=[0.8, -2.45, 0.97],
-                quat=[1/sqrt(2), 0, 0, -1/sqrt(2)],
+        # FIXME: figure out why this specific table "frl_apartment_table_03" has odd collision
+        # properties with partial obj passthrough
+        self._table_plane = scene.add_entity(
+            morph=gs.morphs.Box(
+                pos=[2.27, -5.33, 0.363], size=[0.7, 1.2, 0.1],
+                fixed=True, collision=True, visualization=False,
             ),
         )
-        self._stapler = scene.add_entity(
-            material=gs.materials.Rigid(rho=300),
-            morph=gs.morphs.URDF(
-                file=str(get_temp_data_abs_path("PartNet-Mobility/103280/mobility.urdf")),
-                scale=0.09,
-                pos=[0.8, -2.2, 0.97],
-                quat=[1/sqrt(2), 0, 0, -1/sqrt(2)],
-            ),
+        self._g_chicken_racer_toy = self._add_mjcf_obj(
+            file="/workspace/RoboSandbox/assets/CHICKEN_RACER/model.xml", scene=scene, pos=[2.3, -5.4, 0.42],
+        )
+        self._g_basket = self._add_mjcf_obj(
+            file="/workspace/RoboSandbox/assets/Target_Basket_Medium/model.xml", scene=scene, pos=[2.3, -4.95, 0.52],
+        )
+        self._g_helicopter = self._add_mjcf_obj(
+            file="/workspace/RoboSandbox/assets/HELICOPTER/model.xml", scene=scene, pos=[2.375, -5.225, 0.41], quat=[0.7071, 0, 0, 0.7071],
+        )
+        self._g_fire_truck = self._add_mjcf_obj(
+            file="/workspace/RoboSandbox/assets/FIRE_TRUCK/model.xml", scene=scene, pos=[2.15, -5.2, 0.41],
         )
 
     def scene_reset(self):
-        self._mouse.set_pos([0.8, -2.45, 0.97])
-        self._mouse.set_quat([1/sqrt(2), 0, 0, -1/sqrt(2)])
-        self._stapler.set_pos([0.8, -2.2, 0.97])
-        self._stapler.set_quat([1/sqrt(2), 0, 0, -1/sqrt(2)])
+        self._g_chicken_racer_toy.set_pos([2.3, -5.25, 0.45])
+        self._g_chicken_racer_toy.set_quat([1, 0, 0, 0])
+        self._g_basket.set_pos([2.3, -4.95, 0.42])
+        self._g_basket.set_quat([1, 0, 0, 0])
+        self._g_helicopter.set_pos([2.375, -5.225, 0.41])
+        self._g_helicopter.set_quat([0.7071, 0, 0, 0.7071])
+        self._g_fire_truck.set_pos([2.15, -5.2, 0.41])
+        self._g_fire_truck.set_quat([1, 0, 0, 0])
 
 
 class ReplicadApt5Kitchen(ReplicadBase):
@@ -100,7 +131,9 @@ class ReplicadApt5Kitchen(ReplicadBase):
     render_all_steps = False
     franka_pos = [-1.3, -2.5, 0.9]
     franka_quat = [0, 0, 0, -1]
+    rest_pose = REST_POSE
     keep_articulated = {"fridge"}
+    load_articulated = True
     scene_config_file = get_replicacad_scene_config("apt_5")
     def _add_objects(self, scene: gs.Scene): pass
     def scene_reset(self): pass

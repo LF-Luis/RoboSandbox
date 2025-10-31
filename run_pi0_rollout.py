@@ -22,7 +22,7 @@ if __name__ == "__main__":
         renderer=gs.renderers.Rasterizer(),
     )
     ss.setup_scene(scene)
-    franka_droid = DroidManager(scene, ss.franka_pos, ss.franka_quat, ss.render_all_steps)
+    franka_droid = DroidManager(scene, ss.franka_pos, ss.franka_quat, ss.render_all_steps, rest_pose=ss.rest_pose)
     # Build sim and reset franka arm
     scene.build()
     franka_droid.setup()

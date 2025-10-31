@@ -33,10 +33,12 @@ class DroidManager:
         base_quat: list,
         render_all_steps: bool,
         enable_left_2_cam: bool = False,
+        rest_pose: list = REST_POSE,
     ):
         self._scene = scene
         self._render_all_steps = render_all_steps
         self._enable_left_2_cam = enable_left_2_cam
+        self._rest_pose = rest_pose
         self._franka = self._scene.add_entity(
             gs.morphs.MJCF(file=str(MUJOCO_FILE), pos=base_pos, quat=base_quat),
             material=gs.materials.Rigid(
@@ -63,17 +65,15 @@ class DroidManager:
         self._franka.set_dofs_damping(damping=JOINT_DAMPING, dofs_idx_local=self._dofs_idx)
         self._franka.set_dofs_force_range(FORCE_RANGES_LOWER, FORCE_RANGES_UPPER, self._dofs_idx)
 
-    def goto_start_pos(self):
+    def goto_start_pos(self, setup_steps: int = SETUP_STABILITY_STEPS):
         # Teleport to starting position
-        self._franka.set_dofs_position(REST_POSE, self._dofs_idx)
+        print(f"LF_DEBUG self._rest_pose: {self._rest_pose}")
+        self._franka.set_dofs_position(self._rest_pose, self._dofs_idx)
         # Solve for starting position
-        self._franka.control_dofs_position(REST_POSE, self._dofs_idx)
+        self._franka.control_dofs_position(self._rest_pose, self._dofs_idx)
         # Wait for stabilization
-        print(f"Running {SETUP_STABILITY_STEPS} steps to stabilize at home position.")
-        # for _ in range(SETUP_STABILITY_STEPS):
-        #     self._scene.step()
-        # self.steps(n=1)  # Perform setup once
-        self.steps(n=SETUP_STABILITY_STEPS)
+        print(f"Running {setup_steps} steps to stabilize at home position.")
+        self.steps(n=setup_steps)
         print(f"Done waiting for stabilization.")
 
     def setup(self):

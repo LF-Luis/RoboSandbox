@@ -114,7 +114,7 @@ def add_replicad_scene(
                 surface=gs.surfaces.Default(vis_mode="visual"),
             )
 
-    if not load_articulated:
+    if load_articulated == False:
         return
 
     #########################################################

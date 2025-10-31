@@ -26,7 +26,7 @@ if __name__ == "__main__":
     )
     ss.setup_scene(scene)
     ss.render_all_steps = True  # Render cams every step to help debug
-    franka_droid = DroidManager(scene, ss.franka_pos, ss.franka_quat, ss.render_all_steps)
+    franka_droid = DroidManager(scene, ss.franka_pos, ss.franka_quat, ss.render_all_steps, rest_pose=ss.rest_pose)
     # Build sim and reset franka arm
     scene.build()
     franka_droid.setup()
