@@ -13,9 +13,10 @@ from src.utils.root import get_assets_abs_path, get_temp_data_abs_path
 
 def get_sim_settings(sim_name: str) -> BaseSimSettings:
     available_scenes = {
-        "replicad_apt0_plus_objs": ReplicadApt0PlusObjs,
+        "replicad_apt0_partnet_objs": ReplicadApt0PlusObjs,
         "replicad_apt5_kitchen": ReplicadApt5Kitchen,
         "replicad_apt4_google_scan_objs": ReplicadApt4_GoogleScanObjs,
+        "replicad_apt4_FAIR_DTC_objs": ReplicadApt4_FairDtcObjs,
     }
     if sim_name not in available_scenes:
         raise ValueError(f"Unknown scene setup: {sim_name}. Available scenes: {list(available_scenes.keys())}")
@@ -43,23 +44,23 @@ class ReplicadApt0PlusObjs(ReplicadBase):
     load_articulated = False
 
     # Sim objects
-    _bottle = None
-    _replica_bowl = None
+    _pn_bottle = None  # Object from PartNet dataset
+    _replica_bowl = None    # Object from ReplicaCAD dataset
     def _add_objects(self, scene: gs.Scene):
-        self._bottle = scene.add_entity(
+        self._pn_bottle = scene.add_entity(
             material=gs.materials.Rigid(rho=300),
             morph=gs.morphs.URDF(
                 file=str(get_assets_abs_path("3763/mobility_vhacd_fixed.urdf")),
                 scale=0.09,
-                pos=[0.95, -2.55, 0.95],
+                pos=[0.95, -2.55, 0.99],
                 quat=[1/sqrt(2), 0, 1/sqrt(2), 0],
             ),
         )
         self._replica_bowl = add_replicacad_obj(scene, "frl_apartment_bowl_07", [0.6, -2.3,  1], [0.7071, 0.7071, 0, 0])
 
     def scene_reset(self):
-        self._bottle.set_pos([0.95, -2.55, 0.95])
-        self._bottle.set_quat([1/sqrt(2), 0, 1/sqrt(2), 0])
+        self._pn_bottle.set_pos([0.95, -2.55, 0.99])
+        self._pn_bottle.set_quat([1/sqrt(2), 0, 1/sqrt(2), 0])
         self._replica_bowl.set_pos([0.6, -2.3,  1])
         self._replica_bowl.set_quat([0.7071, 0.7071, 0, 0])
 
@@ -137,3 +138,54 @@ class ReplicadApt5Kitchen(ReplicadBase):
     scene_config_file = get_replicacad_scene_config("apt_5")
     def _add_objects(self, scene: gs.Scene): pass
     def scene_reset(self): pass
+
+
+class ReplicadApt4_FairDtcObjs(ReplicadBase):
+    """
+    # Sim info
+    Freq = 15Hz = 1/15 secs/action
+    DT = 0.01 secs/step
+    STEPS_PER_ACTION = Freq / DT = 6.6777 steps/actions = 7 steps/actions
+    """
+    dt = 0.005
+    steps_per_action = 13
+    render_all_steps = False
+    load_articulated = False
+    scene_config_file = get_replicacad_scene_config("apt_4")
+    franka_pos = [2.85, -2.1, 0.6]
+    franka_quat = [0, 0, 0, 1]
+    rest_pose = [0, -0.8, 0, -2, 0, 1.7, 0, 0.0, 0.0]
+    keep_as_rigid = {"frl_apartment_table_04", "frl_apartment_table_03", "frl_apartment_table_02", "frl_apartment_table_01"}
+    skip_loading = {}
+
+    _dtc_orange_juice = None  # FAIR Digital Twin Catalogue asset
+    _dtc_coffee_mug = None    # FAIR DTC asset
+
+    def _add_glb_obj(self, file, scene, pos, quat=[1, 0, 0, 0]):
+        return scene.add_entity(
+            gs.morphs.Mesh(
+                file=file, pos=pos, quat=quat, visualization=True, collision=True,
+                fixed=False, convexify=False, decimate=True, decompose_nonconvex=False,
+            ),
+            surface=gs.surfaces.Default(vis_mode="visual"),
+        )
+
+    def _add_objects(self, scene: gs.Scene):
+        self._dtc_orange_juice = self._add_glb_obj(
+            file="/workspace/RoboSandbox/assets/Carton_Toy_0E9D95Af_OrangeJuice_1/DTC_1_1_Carton_Toy_0E9D95Af_OrangeJuice_1_3d-asset.glb",
+            scene=scene,
+            pos=[2.2, -1.9, 0.762],
+            quat=[0.5, 0.5, -0.5, -0.5],
+        )
+        self._dtc_coffee_mug = self._add_glb_obj(
+            file="/workspace/RoboSandbox/assets/Kitchen_Mug_79E00D2C_CoffeeMug/DTC_1_1_Kitchen_Mug_79E00D2C_CoffeeMug_3d-asset.glb",
+            scene=scene,
+            pos=[2.25, -2.2, 0.762],
+            quat=[0.5, 0.5, -0.5, -0.5],
+        )
+
+    def scene_reset(self):
+        self._dtc_orange_juice.set_pos([2.2, -1.9, 0.762])
+        self._dtc_orange_juice.set_quat([0.5, 0.5, -0.5, -0.5])
+        self._dtc_coffee_mug.set_pos([2.25, -2.2, 0.762])
+        self._dtc_coffee_mug.set_quat([0.5, 0.5, -0.5, -0.5])

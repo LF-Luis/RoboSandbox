@@ -53,7 +53,7 @@ class DroidManager:
     def _create_cams(self):
         def _pinhole_cam():
             # pos/lookat will be reset after GS Scene build
-            return self._scene.add_camera(pos=[0, 0, 0], lookat=[0, 0, 0], res=CAM_RES, fov=CAM_FOV, GUI=True)
+            return self._scene.add_camera(pos=[0, 0, 0], lookat=[0, 0, 0], res=CAM_RES, fov=CAM_FOV, GUI=True, near=0.005)
         self._wrist_camera = _pinhole_cam()
         self._ext_cam_1_left = _pinhole_cam()
         if self._enable_left_2_cam:
@@ -73,7 +73,13 @@ class DroidManager:
         self._franka.control_dofs_position(self._rest_pose, self._dofs_idx)
         # Wait for stabilization
         print(f"Running {setup_steps} steps to stabilize at home position.")
+
+        # Disable rendering while setup is happening
+        _render_all_steps = self._render_all_steps
+        self._render_all_steps = False
         self.steps(n=setup_steps)
+        self._render_all_steps = _render_all_steps
+
         print(f"Done waiting for stabilization.")
 
     def setup(self):
