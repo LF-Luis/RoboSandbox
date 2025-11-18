@@ -25,13 +25,34 @@ def get_sim_settings(sim_name: str) -> BaseSimSettings:
 
 class ReplicadApt0PlusObjs(ReplicadBase):
     """
-    # Sim info
+    # NOTE: For fast sim set:
+        dt = 0.01
+        steps_per_action = 7
+    in src/sims/replicad_plus_objs_scenes.py and use
+    assets/panda_wt_robotiq_2f85-fast/panda_wt_2f85-fast.xml in src/robots/droid.py
+
+    Plus use this simpler scene setup!
+    # scene = gs.Scene(
+    #     show_viewer=False,
+    #     show_FPS=False,
+    #     sim_options=gs.options.SimOptions(dt=ss.dt, requires_grad=False),
+    #     renderer=gs.renderers.Rasterizer(),
+    # )
+
+    # Why dt = 0.01 and steps_per_action = 7:
     Freq = 15Hz = 1/15 secs/action
     DT = 0.01 secs/step
     STEPS_PER_ACTION = Freq / DT = 6.6777 steps/actions = 7 steps/actions
     """
-    dt = 0.01  # time per sim-step
-    steps_per_action = 7  # Number of sim-steps to take per control-action cmd
+
+    """
+    # Sim info
+    Freq = 15Hz = 1/15 secs/action
+    DT = 0.002 secs/step
+    STEPS_PER_ACTION = Freq / DT = 33.33 steps/actions = 33 steps/actions
+    """
+    dt = 0.002
+    steps_per_action = 33
     render_all_steps = False  # Whether to render cameras at all sim steps
 
     # Scene info
@@ -66,8 +87,10 @@ class ReplicadApt0PlusObjs(ReplicadBase):
 
 
 class ReplicadApt4_GoogleScanObjs(ReplicadBase):
-    dt = 0.01
-    steps_per_action = 7
+    # dt = 0.01  # Run sim way faster!
+    # steps_per_action = 7
+    dt = 0.002
+    steps_per_action = 33
     render_all_steps = False
     load_articulated = False
     scene_config_file = get_replicacad_scene_config("apt_4")
@@ -127,8 +150,10 @@ class ReplicadApt4_GoogleScanObjs(ReplicadBase):
 
 
 class ReplicadApt5Kitchen(ReplicadBase):
-    dt = 0.01
-    steps_per_action = 7
+    # dt = 0.01  # Run sim way faster!
+    # steps_per_action = 7
+    dt = 0.002
+    steps_per_action = 33
     render_all_steps = False
     franka_pos = [-1.3, -2.5, 0.9]
     franka_quat = [0, 0, 0, -1]
@@ -141,14 +166,16 @@ class ReplicadApt5Kitchen(ReplicadBase):
 
 
 class ReplicadApt4_FairDtcObjs(ReplicadBase):
+    # dt = 0.01  # Run sim way faster!
+    # steps_per_action = 7
     """
     # Sim info
     Freq = 15Hz = 1/15 secs/action
-    DT = 0.01 secs/step
-    STEPS_PER_ACTION = Freq / DT = 6.6777 steps/actions = 7 steps/actions
+    DT = 0.002 secs/step
+    STEPS_PER_ACTION = Freq / DT = 33.33 steps/actions = 33 steps/actions
     """
-    dt = 0.005
-    steps_per_action = 13
+    dt = 0.002
+    steps_per_action = 33
     render_all_steps = False
     load_articulated = False
     scene_config_file = get_replicacad_scene_config("apt_4")

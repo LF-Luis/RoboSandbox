@@ -39,12 +39,10 @@ class DroidManager:
         self._render_all_steps = render_all_steps
         self._enable_left_2_cam = enable_left_2_cam
         self._rest_pose = rest_pose
-        self._franka = self._scene.add_entity(
-            gs.morphs.MJCF(file=str(MUJOCO_FILE), pos=base_pos, quat=base_quat),
-            material=gs.materials.Rigid(
-                coup_restitution=0.0,  # No bouncing during coupling
-            ),
-            surface=gs.surfaces.Default(vis_mode="visual"),
+        self._record_every_n = 1
+        self._render_step_counter = 0
+        self._franka = scene.add_entity(
+            gs.morphs.MJCF(file=str(MUJOCO_FILE), pos=base_pos, quat=base_quat)
         )
         self._end_effector = self._franka.get_link(name=END_EFFECTOR_NAME)
         self._dofs_idx = [self._franka.get_joint(name).dof_idx_local for name in JOINT_NAMES]
@@ -53,7 +51,7 @@ class DroidManager:
     def _create_cams(self):
         def _pinhole_cam():
             # pos/lookat will be reset after GS Scene build
-            return self._scene.add_camera(pos=[0, 0, 0], lookat=[0, 0, 0], res=CAM_RES, fov=CAM_FOV, GUI=True, near=0.005)
+            return self._scene.add_camera(pos=[0, 0, 0], lookat=[0, 0, 0], res=CAM_RES, fov=CAM_FOV, GUI=False, near=0.005)
         self._wrist_camera = _pinhole_cam()
         self._ext_cam_1_left = _pinhole_cam()
         if self._enable_left_2_cam:
@@ -126,10 +124,13 @@ class DroidManager:
         for _ in range(n):
             self._scene.step()
             if self._render_all_steps:
-                self._wrist_camera.move_to_attach()
-                _ = self._wrist_camera.render()
-                _ = self._ext_cam_1_left.render()
-                if self._enable_left_2_cam: self._ext_cam_2_left.render()
+                self._render_step_counter += 1
+                if self._render_step_counter % self._record_every_n == 0:
+                    # self._wrist_camera.move_to_attach()
+                    # _ = self._wrist_camera.render()
+                    # _ = self._ext_cam_1_left.render()
+                    if self._enable_left_2_cam:
+                        self._ext_cam_2_left.render()
 
     def apply_abs_joint_actions(self, actions: np.ndarray, steps_per_action: int):
         # Absolute joint pos approach
@@ -146,19 +147,22 @@ class DroidManager:
             self._franka.control_dofs_position(franka_act, self._dofs_idx)
             self.steps(steps_per_action)
 
-    def cams_start_recording(self):
-        self._wrist_camera.start_recording()
-        self._ext_cam_1_left.start_recording()
+    def cams_start_recording(self, dt: float, target_fps: float = 60.0):
+        # Start recording and configure downsampling so that it renders approximately target_fps
+        self._record_every_n = int(round(1.0 / (target_fps * dt)))
+        self._render_step_counter = 0
+        # self._wrist_camera.start_recording()
+        # self._ext_cam_1_left.start_recording()
         if self._enable_left_2_cam: self._ext_cam_2_left.start_recording()
 
     def cams_end_recording(self, path: str):
         time_stamp = datetime.now().strftime("%m-%d-%y_%H-%M")
-        self._wrist_camera.stop_recording(
-            save_to_filename=f"{path}/wrist_{time_stamp}.mp4"
-        )
-        self._ext_cam_1_left.stop_recording(
-            save_to_filename=f"{path}/scene_{time_stamp}.mp4"
-        )
+        # self._wrist_camera.stop_recording(
+        #     save_to_filename=f"{path}/wrist_{time_stamp}.mp4"
+        # )
+        # self._ext_cam_1_left.stop_recording(
+        #     save_to_filename=f"{path}/scene_{time_stamp}.mp4"
+        # )
         if self._enable_left_2_cam:
             self._ext_cam_2_left.stop_recording(
                 save_to_filename=f"{path}/scene_2_{time_stamp}.mp4"

@@ -6,17 +6,8 @@ from src.sims.replicad_plus_objs_scenes import get_sim_settings
 from src.utils.run_sim_helper import user_input_should_reset, user_input_update_prompt, sim_arg_parser, auto_reset
 
 
-"""
-To use renderer=gs.renderers.RayTracer() with the current setup you must fix the
-following bug:
-/opt/conda/lib/python3.11/site-packages/genesis/vis/raytracer.py
-Line 174
-        LuisaRenderPy.init(
-            ...
-            device_index=self.cuda_device,  <--- bug, this is the fix
-            ...
-        )
-"""
+# NOTE: see src/robots/droid.py -- I disabled a few cam recording because if the recording is long it can eat up a lot of
+# CPU mem. Keep recordings short (or stream them) -- enable all cams in src/robots/droid.py if you need them.
 
 if __name__ == "__main__":
     args = sim_arg_parser()
@@ -30,9 +21,22 @@ if __name__ == "__main__":
     scene = gs.Scene(
         show_viewer=False,  # Disable GUI
         show_FPS=False,
-        sim_options=gs.options.SimOptions(dt=ss.dt, requires_grad=False),
-        renderer=gs.renderers.Rasterizer(),
+        rigid_options=gs.options.RigidOptions(
+            integrator=gs.integrator.implicitfast,
+            constraint_solver=gs.constraint_solver.Newton,
+            iterations=200,
+            ls_iterations=50,
+            tolerance=1e-6,
+            contact_resolve_time=0.02
+        ),
+        sim_options=gs.options.SimOptions(
+            dt=ss.dt,  # 0.002,
+            substeps=20,
+            requires_grad=False,
+        ),
+        renderer=gs.renderers.Rasterizer()
     )
+
     ss.setup_scene(scene)
     ss.render_all_steps = True  # Render cams every step so that all frames are recorded
     franka_droid = DroidManager(scene, ss.franka_pos, ss.franka_quat, ss.render_all_steps, enable_left_2_cam=True, rest_pose=ss.rest_pose)

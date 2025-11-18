@@ -15,11 +15,39 @@ if __name__ == "__main__":
     # Setup sim
     ss = get_sim_settings(sim_name=sim_setting)
     gs.init(backend=gs.gpu, logging_level="info")
+
+    """
+    # NOTE: For fast sim set:
+        dt = 0.01
+        steps_per_action = 7
+    in src/sims/replicad_plus_objs_scenes.py and use
+    assets/panda_wt_robotiq_2f85-fast/panda_wt_2f85-fast.xml in src/robots/droid.py
+
+    Plus use this simpler scene setup!
+    """
+    # scene = gs.Scene(
+    #     show_viewer=False,
+    #     show_FPS=False,
+    #     sim_options=gs.options.SimOptions(dt=ss.dt, requires_grad=False),
+    #     renderer=gs.renderers.Rasterizer(),
+    # )
     scene = gs.Scene(
-        show_viewer=False,
+        show_viewer=False,  # Disable GUI
         show_FPS=False,
-        sim_options=gs.options.SimOptions(dt=ss.dt, requires_grad=False),
-        renderer=gs.renderers.Rasterizer(),
+        rigid_options=gs.options.RigidOptions(
+            integrator=gs.integrator.implicitfast,
+            constraint_solver=gs.constraint_solver.Newton,
+            iterations=200,
+            ls_iterations=50,
+            tolerance=1e-6,
+            contact_resolve_time=0.02
+        ),
+        sim_options=gs.options.SimOptions(
+            dt=ss.dt,  # 0.002,
+            substeps=20,
+            requires_grad=False,
+        ),
+        renderer=gs.renderers.Rasterizer()
     )
     ss.setup_scene(scene)
     franka_droid = DroidManager(scene, ss.franka_pos, ss.franka_quat, ss.render_all_steps, rest_pose=ss.rest_pose)
