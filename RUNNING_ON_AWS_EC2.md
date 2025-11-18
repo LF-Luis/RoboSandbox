@@ -15,7 +15,7 @@ Instances with L4 (G6), A10G (G5), and T4 (G4dn) GPUs should also work, and they
 
 Anyways, here's the setup I use:  
 1. On AWS, create a VM with these configs:
-    - VM type: `g6e.2xlarge` (you'll need to request quota for this)
+    - VM type: `g6e.4xlarge` (you'll need to request quota for this)
     - AMI: `NVIDIA Omniverse Development Workstation (Linux)`
         - Mine has `Ubuntu 24.04.3 LTS`, yours may be a newer one -- should be mostly okay
     - Set IP rule for your home/work IP -- this is safety precaution
@@ -33,18 +33,18 @@ To use your AWS instance just start it and run the commands below.
 
 DO NOT FORGET to `stop` your instance while not using it, else you'll be charge for the compute.
 
-Replace `ec2-98-84-51-6.compute-1.amazonaws.com` with your VMs `Public IPv4 DNS`:
+Replace `ec2-3-238-62-31.compute-1.amazonaws.com` with your VMs `Public IPv4 DNS`:
 ```bash
 # 1. Ssh into instance
-ssh -i ~/.ssh/aws-us-east-1.pem ubuntu@ec2-98-84-51-6.compute-1.amazonaws.com
+ssh -i ~/.ssh/aws-us-east-1.pem ubuntu@ec2-3-238-62-31.compute-1.amazonaws.com
 # 2. Open desktop
-# In DCV macbook/pc app enter hostname: ec2-98-84-51-6.compute-1.amazonaws.com:8443#console
+# In DCV macbook/pc app enter hostname: ec2-3-238-62-31.compute-1.amazonaws.com:8443#console
 # 3. Sync changes from local computer to EC2 instance
 rsync -avz --progress \
     --exclude '.git*' --exclude 'temp_data' --exclude '__pycache__' --delete \
     -e "ssh -i ~/.ssh/aws-us-east-1.pem" \
     "$PWD" \
-    ubuntu@ec2-98-84-51-6.compute-1.amazonaws.com:/home/ubuntu/dev/
+    ubuntu@ec2-3-238-62-31.compute-1.amazonaws.com:/home/ubuntu/dev/
 # 4. Run code
 who  # get user DISPLAY, e.g. ":1"
 export DISPLAY=:1
