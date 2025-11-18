@@ -87,3 +87,6 @@ This might be an issue in Genesis that requires more investigation. For now, all
 - [kevinzakka/mujoco_scanned_objects (Google's Scanned Objects Dataset in mujoco format)](https://github.com/kevinzakka/mujoco_scanned_objects)
 
 </details>
+
+## License
+GNU GPLv3 ([LICENSE.txt](./LICENSE.txt))
